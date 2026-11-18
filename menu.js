@@ -1,19 +1,31 @@
 (() => {
   const $ = id => document.getElementById(id);
-  const key = "sisi-dinner-menu-v1";
+  const key = "sisi-dinner-menu-v2";
   const dialog = $("editor"), select = $("foodSelect"), name = $("foodName");
   const file = $("foodFile"), preview = $("preview"), msg = $("menuMsg"), save = $("saveFood");
-  let entries = DEFAULTS.map(f => ({name:f.n})), photo, revision = 0;
+  let entries = DEFAULTS.map((f,base) => ({name:f.n,base})), photo, revision = 0;
   try {
-    const data = JSON.parse(localStorage.getItem(key));
-    if (Array.isArray(data) && data.length >= DEFAULTS.length && data.every(d =>
-      d && typeof d.name === "string" && d.name.trim() && (!d.photo || /^data:image\/webp;base64,/.test(d.photo)))) entries = data;
+    const saved = localStorage.getItem(key);
+    const data = JSON.parse(saved ?? localStorage.getItem("sisi-dinner-menu-v1"));
+    if (Array.isArray(data) && data.length >= 10 && data.every(d =>
+      d && typeof d.name === "string" && d.name.trim() && (!d.photo || /^data:image\/webp;base64,/.test(d.photo)))) {
+      if (saved !== null) entries = data;
+      else {
+        // v1's first ten slots were defaults; everything after them was user-added.
+        entries = data.map((d,i) => ({...d,base:i < 10 ? i : undefined}));
+        DEFAULTS.slice(10).forEach((f,i) => {
+          const match = entries.find(d => d.name === f.n);
+          if (!match) entries.push({name:f.n,base:10+i});
+          else if (match.base === undefined) match.base=10+i;
+        });
+      }
+    }
   } catch {}
 
   function refresh() {
     applyMenu(entries.map((entry, i) => {
-      const base = DEFAULTS[i], original = base?.n === entry.name;
-      return {n:entry.name, c:DEFAULTS[i % DEFAULTS.length].c, e:original ? base.e : "🍽️",
+      const base = DEFAULTS[entry.base], original = base?.n === entry.name;
+      return {n:entry.name, short:original && base.short, c:base?.c || DEFAULTS[i % DEFAULTS.length].c, e:original ? base.e : "🍽️",
         img:entry.photo || base?.img, q:original ? base.q : [`今晚就吃${entry.name}，大王亲点的好滋味！`]};
     }));
   }
@@ -56,7 +68,7 @@
     if (!title) {msg.textContent = "请输入菜名。"; name.focus(); return;}
     if (entries.some((d, n) => n !== i && d.name === title)) {msg.textContent = "菜单里已经有这道菜了。"; return;}
     const next = entries.slice(), index = i < 0 ? next.length : i;
-    next[index] = {name:title, photo};
+    next[index] = {name:title, photo, base:entries[index]?.base};
     try {localStorage.setItem(key, JSON.stringify(next));}
     catch {msg.textContent = "未能保存。请检查浏览器存储权限或可用空间。"; return;}
     entries = next; refresh(); options(index); msg.textContent = `已保存「${title}」，转盘已更新。`;

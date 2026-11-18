@@ -141,7 +141,11 @@ const DEFAULTS=[
  {n:"烤鱼",e:"🐟",c:"#ff2e93",q:["鱼来运转，今晚不吃鱼，对不起这个好兆头。","一口鲜辣一口嫩，配上土豆片，谁吃谁知道。","鱼肉补脑，大王要多吃，毕竟明天还要运筹帷幄。"]},
  {n:"火锅",e:"🔥",c:"#ffd23f",q:["没有什么事是一顿火锅解决不了的，如果有，就吃两顿。","涮一涮，烫一烫，所有不开心都下锅。","人生就像火锅，什么都能涮，唯独不能涮自己。"]},
  {n:"麻辣烫",e:"🌶️",c:"#19f0ff",q:["自由搭配，想吃啥夹啥，今晚大王说了算。","一碗麻辣烫，汤浓料足，快乐不用排队。","加麻加辣加香菜，这才是生活该有的味道。"]},
- {n:"小龙虾",e:"🦞",c:"#7c4dff",q:["夏夜不吃小龙虾，等于白过了一个晚上。","剥壳是修行，吮指是回报，今晚双手交给虾。","戴上手套，开启战斗，虾不剥完不许走。"]}
+ {n:"小龙虾",e:"🦞",c:"#7c4dff",q:["夏夜不吃小龙虾，等于白过了一个晚上。","剥壳是修行，吮指是回报，今晚双手交给虾。","戴上手套，开启战斗，虾不剥完不许走。"]},
+ {n:"沙县鸡腿套餐",short:"沙县鸡腿",e:"🍗",c:"#ff8f49",q:["来份卤鸡腿配米饭，多加一份青菜，卤汁另放，想蘸多少自己定。"]},
+ {n:"清蒸鱼饭",e:"🐟",c:"#50d5bd",q:["姜丝葱段衬鱼鲜，夹一筷鱼肉，再来一口米饭。"]},
+ {n:"番茄虾仁荞麦面",short:"虾仁荞麦",e:"🍜",c:"#ff6587",q:["番茄熬成酸甜汤底，虾仁和荞麦面一起挑上筷子。"]},
+ {n:"鸡胸杂粮饭",short:"鸡胸杂粮",e:"🍚",c:"#f6c749",q:["鸡胸切片铺在杂粮饭上，配脆嫩西兰花，酱汁另外放。"]}
 ];
 DEFAULTS.forEach((f,i)=>f.img=`food/${i+1}.webp`);
 const TAU=Math.PI*2;
@@ -174,7 +178,7 @@ function draw(){
     else{ctx.font=sz*.8+"px serif";ctx.fillText(f.e,R*.78,0)}
     ctx.font=R*Math.min(.12,1.4/N)+"px ZCOOL KuaiLe,PingFang SC,Microsoft YaHei,sans-serif";
     ctx.lineJoin="round";ctx.lineWidth=R*.04;ctx.strokeStyle="#1a0638";
-    const label=Array.from(f.n).length>4?Array.from(f.n).slice(0,3).join("")+"…":f.n;
+    const label=f.short || (Array.from(f.n).length>4?Array.from(f.n).slice(0,3).join("")+"…":f.n);
     ctx.strokeText(label,R*.43,0,R*.35);ctx.fillStyle="#fff";ctx.fillText(label,R*.43,0,R*.35);
     ctx.restore();
   });
@@ -256,6 +260,6 @@ addEventListener("resize",draw);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
 draw();setRot();
 </script>
-<script src="menu.js"></script>
+<script src="menu.js?v=2"></script>
 </body>
 </html>
