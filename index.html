@@ -89,12 +89,16 @@ canvas#wheel{position:absolute;inset:6.5%;width:87%;height:87%;border-radius:50%
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:70}
 @media (prefers-reduced-motion:reduce){h1,#start,.bulb,.tag,.emo{animation:none}}
 </style>
-<link rel="stylesheet" href="menu.css">
+<link rel="stylesheet" href="menu.css?v=3">
 </head>
 <body>
 <main>
   <div class="top"><span>COIN <b id="coin">03</b></span><span>PLAYER: <b>SISI</b></span><button class="mute" id="mute" aria-label="声音开关">🔊</button></div>
-  <h1>思思大王<br>晚餐转盘机<small>INSERT COIN · PRESS START</small></h1>
+  <h1><span id="titleTop">思思大王</span><br><span id="titleBottom">晚餐转盘机</span><small id="subtitle">INSERT COIN · PRESS START</small></h1>
+  <div class="modes" role="group" aria-label="转盘模式">
+    <button id="dinnerMode" class="menu-button" type="button" aria-pressed="true">今晚吃什么</button>
+    <button id="dateMode" class="menu-button" type="button" aria-pressed="false">男朋友陪我做什么</button>
+  </div>
   <div class="box" id="box">
     <div class="frame" id="frame"></div>
     <canvas id="wheel"></canvas>
@@ -120,11 +124,11 @@ canvas#wheel{position:absolute;inset:6.5%;width:87%;height:87%;border-radius:50%
 <div class="modal" id="modal">
   <div class="card">
     <div class="tag">★ YOU WIN ★ 大奖已出炉 ★</div>
-    <p class="who">思思大王，今晚吃——</p>
+    <p class="who" id="rWho">思思大王，今晚吃——</p>
     <div class="emo" id="rEmo">🍣</div>
     <div class="name" id="rName">日料</div>
-    <div class="why"><i>WHY 为什么吃它</i><span id="rWhy"></span></div>
-    <div class="sign">—— 今日饭神签 · 不得反驳</div>
+    <div class="why"><i id="rCaption">WHY 为什么吃它</i><span id="rWhy"></span></div>
+    <div class="sign" id="rSign">—— 今日饭神签 · 不得反驳</div>
     <div class="btns"><button id="ok">就这么定了！</button><button class="b2" id="again">再来一把</button></div>
   </div>
 </div>
@@ -148,6 +152,18 @@ const DEFAULTS=[
  {n:"鸡胸杂粮饭",short:"鸡胸杂粮",e:"🍚",c:"#f6c749",q:["鸡胸切片铺在杂粮饭上，配脆嫩西兰花，酱汁另外放。"]}
 ];
 DEFAULTS.forEach((f,i)=>f.img=`food/${i+1}.webp`);
+const DATES=[
+ {n:"甜蜜双排",e:"🎮",c:"#ff2e93",q:["情侣峡谷联合执法：输赢不重要，重要的是别把对象当路人举报。"]},
+ {n:"压马路",e:"👟",c:"#19f0ff",q:["双人巡检城市地砖，路线未定，牵手里程照常结算。"]},
+ {n:"吃漂亮饭",e:"🍽️",c:"#ffd23f",q:["餐桌时尚周开幕，菜先走红毯，相机先吃第一口。"]},
+ {n:"买衣服",e:"🛍️",c:"#7c4dff",q:["衣柜扩建听证会：男朋友担任拎袋专员，附带一句真诚的‘好看’。"]},
+ {n:"看电影",e:"🍿",c:"#00e676",q:["两小时合法失联，剧情允许反转，爆米花禁止单方面清仓。"]},
+ {n:"去他家",e:"🏠",c:"#ff8f49",q:["突访男方生活样板间，重点考察沙发舒适度和冰箱库存。"]},
+ {n:"去我家",e:"🔑",c:"#50d5bd",q:["女方主场开放日。来宾自备零食，选片权由屋主保留。"]},
+ {n:"吵一架",e:"🗯️",c:"#ff6587",q:["开启三分钟沙雕辩论赛：辩题是‘谁更会嘴硬’，禁止翻旧账。"]},
+ {n:"干一架",e:"🥊",c:"#f6c749",q:["枕头擂台赛开张，禁止真动手；谁先笑谁输，输家负责收枕头。"]},
+ {n:"抱一抱",e:"🫂",c:"#a085ff",q:["开启双人无线充电模式，抱满三秒，电量增加一点，不接受科学质疑。"]}
+];
 const TAU=Math.PI*2;
 let FOODS=DEFAULTS.slice(),N=FOODS.length,S=TAU/N;
 const pictures=new Map();
@@ -158,7 +174,28 @@ function applyMenu(list){
 }
 const cv=document.getElementById("wheel"),ctx=cv.getContext("2d");
 const ptr=document.getElementById("ptr"),box=document.getElementById("box");
-let theta=0,spinning=false,coins=3,last=-1,muted=false,hist=[];
+let theta=0,spinning=false,coins=3,last=-1,muted=false;
+let dinnerMenu=DEFAULTS, dateMode=false;
+const historyByMode=[[],[]];
+const modeButtons=[document.getElementById("dinnerMode"),document.getElementById("dateMode")];
+const startButton=document.getElementById("start"),openMenu=document.getElementById("openMenu");
+function setDinnerMenu(list){dinnerMenu=list;if(!dateMode)applyMenu(list)}
+function drawHistory(){
+  const history=historyByMode[Number(dateMode)], chips=document.getElementById("chips");
+  const items=history.length?history:["还没有战绩，快让大王转一把！"];
+  chips.replaceChildren(...items.map(h=>{const chip=document.createElement("span");chip.className=history.length?"chip":"empty";chip.textContent=h;return chip}));
+}
+function switchMode(isDate){
+  if(startButton.disabled||isDate===dateMode)return;
+  dateMode=isDate;
+  modeButtons.forEach((button,i)=>button.setAttribute("aria-pressed",String(i===Number(isDate))));
+  document.getElementById("titleTop").textContent=isDate?"今晚男朋友":"思思大王";
+  document.getElementById("titleBottom").textContent=isDate?"陪我做什么？":"晚餐转盘机";
+  document.getElementById("subtitle").textContent=isDate?"PLAYER 2 · PRESS START":"INSERT COIN · PRESS START";
+  openMenu.hidden=isDate;
+  applyMenu(isDate?DATES:dinnerMenu);drawHistory();
+}
+modeButtons.forEach((button,i)=>button.onclick=()=>switchMode(i===1));
 
 function draw(){
   const d=Math.min(window.devicePixelRatio||1,2),w=cv.clientWidth;
@@ -201,9 +238,9 @@ function win(){[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,.18,"squar
 
 /* spin */
 function spin(){
-  if(spinning)return;
-  spinning=true;box.classList.add("fast");document.getElementById("start").disabled=true;
-  document.getElementById("openMenu").disabled=true;
+  if(startButton.disabled)return;
+  spinning=true;box.classList.add("fast");startButton.disabled=true;
+  openMenu.disabled=true;modeButtons.forEach(button=>button.disabled=true);
   coins=Math.max(0,coins-1);if(coins===0)coins=3;
   document.getElementById("coin").textContent=String(coins).padStart(2,"0");
   tone(330,.1,"square",.06);tone(660,.15,"square",.06,.1);
@@ -225,13 +262,15 @@ function done(i){
   document.getElementById("rEmo").textContent=f.e;
   if(f.img){const im=new Image();im.alt=f.n;im.onload=()=>document.getElementById("rEmo").replaceChildren(im);im.src=f.img}
   document.getElementById("rName").textContent=f.n;
+  document.getElementById("rWho").textContent=dateMode?"思思大王，今晚的双人任务是——":"思思大王，今晚吃——";
+  document.getElementById("rCaption").textContent=dateMode?"MISSION 双人任务简报":"WHY 为什么吃它";
+  document.getElementById("rSign").textContent=dateMode?"—— 双人派对 · 双方同意才开局":"—— 今日饭神签 · 不得反驳";
   document.getElementById("rWhy").textContent="“"+f.q[Math.floor(Math.random()*f.q.length)]+"”";
-  hist.unshift(f.e+" "+f.n);hist=hist.slice(0,8);
-  document.getElementById("chips").replaceChildren(...hist.map(h=>{const chip=document.createElement("span");chip.className="chip";chip.textContent=h;return chip}));
+  const history=historyByMode[Number(dateMode)];history.unshift(f.e+" "+f.n);if(history.length>8)history.pop();drawHistory();
   win();boom();
   setTimeout(()=>document.getElementById("modal").classList.add("on"),350);
 }
-function close_(){document.getElementById("modal").classList.remove("on");document.getElementById("start").disabled=false;document.getElementById("openMenu").disabled=false}
+function close_(){document.getElementById("modal").classList.remove("on");startButton.disabled=false;openMenu.disabled=false;modeButtons.forEach(button=>button.disabled=false)}
 
 /* confetti */
 const fx=document.getElementById("fx"),fc=fx.getContext("2d");let ps=[],raf=0;
@@ -254,12 +293,12 @@ function boom(){
 document.getElementById("start").onclick=spin;
 document.getElementById("hub").onclick=spin;
 document.getElementById("ok").onclick=close_;
-document.getElementById("again").onclick=()=>{close_();setTimeout(spin,200)};
+document.getElementById("again").onclick=()=>{close_();spin()};
 document.getElementById("mute").onclick=e=>{muted=!muted;e.currentTarget.textContent=muted?"🔇":"🔊"};
 addEventListener("resize",draw);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
 draw();setRot();
 </script>
-<script src="menu.js?v=2"></script>
+<script src="menu.js?v=3"></script>
 </body>
 </html>

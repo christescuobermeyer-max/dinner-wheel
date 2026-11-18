@@ -23,7 +23,7 @@
   } catch {}
 
   function refresh() {
-    applyMenu(entries.map((entry, i) => {
+    setDinnerMenu(entries.map((entry, i) => {
       const base = DEFAULTS[entry.base], original = base?.n === entry.name;
       return {n:entry.name, short:original && base.short, c:base?.c || DEFAULTS[i % DEFAULTS.length].c, e:original ? base.e : "🍽️",
         img:entry.photo || base?.img, q:original ? base.q : [`今晚就吃${entry.name}，大王亲点的好滋味！`]};

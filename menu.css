@@ -2,6 +2,10 @@
 .menu-button{padding:6px 20px;background:#210b40;border:2px solid var(--cyan);color:var(--cyan)}
 .menu-button:hover,.menu-button:focus-visible{background:#34214c;color:#fff}
 .menu-button:disabled{opacity:.5;cursor:wait}
+.modes{display:grid;grid-template-columns:1fr 1fr;width:min(100%,360px);padding:3px;gap:3px;background:#210b40;border:1px solid #8b75a3;border-radius:10px}
+.modes .menu-button{padding:4px;border:0;color:white;font-size:15px}
+.modes .menu-button[aria-pressed="true"]{background:var(--cyan);color:#12042b}
+.modes .menu-button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 #editor{width:min(380px,92vw);max-height:90dvh;box-sizing:border-box;color:#fff;background:#210c3e;border:2px solid var(--cyan);border-radius:16px;padding:20px;font-family:var(--cn)}
 #editor::backdrop{background:#10051bdc}
 #editor header{display:flex;justify-content:space-between;align-items:center}
