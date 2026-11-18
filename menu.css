@@ -1,0 +1,21 @@
+.menu-button,#closeMenu{font:inherit;cursor:pointer;min-height:44px;border-radius:8px}
+.menu-button{padding:6px 20px;background:#210b40;border:2px solid var(--cyan);color:var(--cyan)}
+.menu-button:hover,.menu-button:focus-visible{background:#34214c;color:#fff}
+.menu-button:disabled{opacity:.5;cursor:wait}
+#editor{width:min(380px,92vw);max-height:90dvh;box-sizing:border-box;color:#fff;background:#210c3e;border:2px solid var(--cyan);border-radius:16px;padding:20px;font-family:var(--cn)}
+#editor::backdrop{background:#10051bdc}
+#editor header{display:flex;justify-content:space-between;align-items:center}
+#menuTitle{margin:0;color:var(--yellow)}
+#closeMenu{width:44px;background:transparent;border:0;color:white;font-size:28px}
+#foodForm{display:grid;gap:12px}
+#foodForm label{display:grid;gap:5px}
+#foodForm input,#foodSelect{min-width:0;width:100%;box-sizing:border-box;padding:9px;border:1px solid #8b75a3;border-radius:6px;background:#120821;color:white;font:inherit}
+#foodFile::file-selector-button{font:inherit;margin-right:8px}
+.food-photo{width:92px;height:92px;display:grid;place-items:center;justify-self:center;border:1px solid #705879;border-radius:12px;overflow:hidden;font-size:40px;background:#180a29}
+.food-photo img,.emo img{height:100%;width:100%;object-fit:cover}
+#rEmo img{width:min(144px,22vh);height:auto;border-radius:14px;vertical-align:middle}
+#rName{font-size:clamp(27px,5vh,48px);overflow-wrap:anywhere}
+.card{max-height:92dvh;overflow:auto}
+.scope,#menuMsg{margin:0;font-size:14px;color:#d5c2e9}
+#menuMsg:empty{display:none}
+#menuMsg{color:var(--yellow)}

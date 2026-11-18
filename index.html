@@ -89,6 +89,7 @@ canvas#wheel{position:absolute;inset:6.5%;width:87%;height:87%;border-radius:50%
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:70}
 @media (prefers-reduced-motion:reduce){h1,#start,.bulb,.tag,.emo{animation:none}}
 </style>
+<link rel="stylesheet" href="menu.css">
 </head>
 <body>
 <main>
@@ -101,8 +102,20 @@ canvas#wheel{position:absolute;inset:6.5%;width:87%;height:87%;border-radius:50%
     <button class="hub" id="hub" aria-label="开始">GO!</button>
   </div>
   <button id="start">开始抽奖<small>TAP TO SPIN</small></button>
+  <button id="openMenu" class="menu-button">✎ 编辑菜单</button>
   <section class="hist"><h2>HISTORY 战绩</h2><div class="chips" id="chips"><span class="empty">还没有战绩，快让大王转一把！</span></div></section>
 </main>
+<dialog id="editor" aria-labelledby="menuTitle">
+  <header><h2 id="menuTitle">大王的菜单</h2><button id="closeMenu" type="button" aria-label="关闭菜单">×</button></header>
+  <form id="foodForm">
+    <label>选择菜品<select id="foodSelect"></select></label>
+    <div class="food-photo" id="preview"></div>
+    <label>菜名<input id="foodName" maxlength="16" required autocomplete="off"></label>
+    <label>更换配图<input id="foodFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+    <p class="scope">菜单只保存在当前浏览器。</p>
+    <p id="menuMsg" role="status"></p><button id="saveFood" class="menu-button">保存菜品</button>
+  </form>
+</dialog>
 
 <div class="modal" id="modal">
   <div class="card">
@@ -118,7 +131,7 @@ canvas#wheel{position:absolute;inset:6.5%;width:87%;height:87%;border-radius:50%
 <canvas id="fx"></canvas>
 
 <script>
-const FOODS=[
+const DEFAULTS=[
  {n:"日料",e:"🍣",c:"#ff2e93",q:["人生苦短，先吃刺身。鲜甜入口，烦恼归零。","今天的你值得被三文鱼温柔对待，别问，问就是仪式感。","精致的人从不亏待自己的胃，这顿日料就是你的勋章。"]},
  {n:"韩料",e:"🥘",c:"#ffd23f",q:["没有什么烦恼是一锅部队锅解决不了的，如果有，就加芝士。","烤肉裹生菜，快乐翻三倍，这是科学。","辣得冒汗才叫过瘾，今晚让泡菜替你说话。"]},
  {n:"烧烤",e:"🍢",c:"#19f0ff",q:["夜晚的灵魂是烧烤，滋啦一声，疲惫全消。","一串不够，那就十串，大王的字典里没有“适可而止”。","烟火气里最抚凡人心，撸串才是打工人的终极治愈。"]},
@@ -130,7 +143,15 @@ const FOODS=[
  {n:"麻辣烫",e:"🌶️",c:"#19f0ff",q:["自由搭配，想吃啥夹啥，今晚大王说了算。","一碗麻辣烫，汤浓料足，快乐不用排队。","加麻加辣加香菜，这才是生活该有的味道。"]},
  {n:"小龙虾",e:"🦞",c:"#7c4dff",q:["夏夜不吃小龙虾，等于白过了一个晚上。","剥壳是修行，吮指是回报，今晚双手交给虾。","戴上手套，开启战斗，虾不剥完不许走。"]}
 ];
-const N=FOODS.length,S=Math.PI*2/N,TAU=Math.PI*2;
+DEFAULTS.forEach((f,i)=>f.img=`food/${i+1}.webp`);
+const TAU=Math.PI*2;
+let FOODS=DEFAULTS.slice(),N=FOODS.length,S=TAU/N;
+const pictures=new Map();
+function applyMenu(list){
+  FOODS=list;N=list.length;S=TAU/N;pictures.clear();
+  for(const f of list){if(!f.img)continue;const im=new Image();im.onload=draw;im.src=f.img;pictures.set(f.img,im)}
+  draw();
+}
 const cv=document.getElementById("wheel"),ctx=cv.getContext("2d");
 const ptr=document.getElementById("ptr"),box=document.getElementById("box");
 let theta=0,spinning=false,coins=3,last=-1,muted=false,hist=[];
@@ -148,10 +169,13 @@ function draw(){
     ctx.lineWidth=R*.012;ctx.strokeStyle="rgba(255,255,255,.85)";ctx.stroke();
     ctx.save();ctx.rotate((i+.5)*S);
     ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.font=R*.2+"px serif";ctx.fillText(f.e,R*.72,0);
-    ctx.font=R*.125+"px ZCOOL KuaiLe,PingFang SC,Microsoft YaHei,sans-serif";
+    const im=pictures.get(f.img),sz=R*Math.min(.34,3.8/N);
+    if(im?.naturalWidth){ctx.save();ctx.beginPath();ctx.arc(R*.78,0,sz/2,0,TAU);ctx.clip();ctx.drawImage(im,R*.78-sz/2,-sz/2,sz,sz);ctx.restore()}
+    else{ctx.font=sz*.8+"px serif";ctx.fillText(f.e,R*.78,0)}
+    ctx.font=R*Math.min(.12,1.4/N)+"px ZCOOL KuaiLe,PingFang SC,Microsoft YaHei,sans-serif";
     ctx.lineJoin="round";ctx.lineWidth=R*.04;ctx.strokeStyle="#1a0638";
-    ctx.strokeText(f.n,R*.42,0);ctx.fillStyle="#fff";ctx.fillText(f.n,R*.42,0);
+    const label=Array.from(f.n).length>4?Array.from(f.n).slice(0,3).join("")+"…":f.n;
+    ctx.strokeText(label,R*.43,0,R*.35);ctx.fillStyle="#fff";ctx.fillText(label,R*.43,0,R*.35);
     ctx.restore();
   });
 }
@@ -175,6 +199,7 @@ function win(){[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,.18,"squar
 function spin(){
   if(spinning)return;
   spinning=true;box.classList.add("fast");document.getElementById("start").disabled=true;
+  document.getElementById("openMenu").disabled=true;
   coins=Math.max(0,coins-1);if(coins===0)coins=3;
   document.getElementById("coin").textContent=String(coins).padStart(2,"0");
   tone(330,.1,"square",.06);tone(660,.15,"square",.06,.1);
@@ -194,14 +219,15 @@ function done(i){
   spinning=false;box.classList.remove("fast");
   const f=FOODS[i];
   document.getElementById("rEmo").textContent=f.e;
+  if(f.img){const im=new Image();im.alt=f.n;im.onload=()=>document.getElementById("rEmo").replaceChildren(im);im.src=f.img}
   document.getElementById("rName").textContent=f.n;
   document.getElementById("rWhy").textContent="“"+f.q[Math.floor(Math.random()*f.q.length)]+"”";
   hist.unshift(f.e+" "+f.n);hist=hist.slice(0,8);
-  document.getElementById("chips").innerHTML=hist.map(h=>'<span class="chip">'+h+'</span>').join("");
+  document.getElementById("chips").replaceChildren(...hist.map(h=>{const chip=document.createElement("span");chip.className="chip";chip.textContent=h;return chip}));
   win();boom();
   setTimeout(()=>document.getElementById("modal").classList.add("on"),350);
 }
-function close_(){document.getElementById("modal").classList.remove("on");document.getElementById("start").disabled=false}
+function close_(){document.getElementById("modal").classList.remove("on");document.getElementById("start").disabled=false;document.getElementById("openMenu").disabled=false}
 
 /* confetti */
 const fx=document.getElementById("fx"),fc=fx.getContext("2d");let ps=[],raf=0;
@@ -230,5 +256,6 @@ addEventListener("resize",draw);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
 draw();setRot();
 </script>
+<script src="menu.js"></script>
 </body>
 </html>
